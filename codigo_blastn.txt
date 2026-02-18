@@ -1,0 +1,29 @@
+#Script desarrollado por Mackie-Greene para asignación taxonómica de secuencias en formato FASTA mediante blastn local contra la base de datos pública de UNITE (Eukarya). 
+
+#Blast fue instalado en un ambiente de micromamba
+
+#Para activar ambiente blast 
+micromamba activate blast_env
+
+#versión de blast: Nucleotide-Nucleotide BLAST 2.17.0+
+
+#base de datos descargada: UNITE_public_all_19.02.2025.fasta
+
+#Descomprimir el archivo de la base de datos
+gunzip UNITE_public_all_19.02.2025.fasta.gz
+
+#Para crear la base de datos para blast local
+makeblastdb -in /home/andrea/Documentos/bd/UNITE_public_all_19.02.2025.fasta -out /home/andrea/Documentos/bd/db -dbtype nucl
+
+
+#Código para correr blastn
+blastn \
+  -query ~/Documentos/secuencias/Canada.fasta \
+  -db ~/Documentos/bd/UNITE_UNITE_19_02_2025 \
+  -max_target_seqs 5 \
+  -outfmt 10 \
+  -out ~/Documentos/output/SEQ_Canada_prueba.txt
+
+
+
+
