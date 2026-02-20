@@ -21,7 +21,6 @@ AlignIO.convert(
 )
 EOF 
 
->
 
 #Luego activar el ambiente de análisis (donde está figtree):
 micromamba deactivate
