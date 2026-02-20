@@ -2,7 +2,7 @@
 
 #Blast fue instalado en un ambiente de micromamba
 
-#Para activar ambiente blast 
+#Para activar ambiente blast: 
 micromamba activate blast_env
 
 #versión de blast: Nucleotide-Nucleotide BLAST 2.17.0+
