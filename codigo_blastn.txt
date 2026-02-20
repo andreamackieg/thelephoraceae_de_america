@@ -1,4 +1,4 @@
-#Script desarrollado por Mackie-Greene para asignación taxonómica de secuencias en formato FASTA mediante blastn local contra la base de datos pública de UNITE (Eukarya). 
+#Script desarrollado por Verónica Rebollo y editado por Andrea Mackie Greene. Sirve para asignación taxonómica de secuencias en formato FASTA mediante blastn local contra la base de datos pública de UNITE (Eukarya). 
 
 #Blast fue instalado en un ambiente de micromamba
 
