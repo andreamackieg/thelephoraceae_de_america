@@ -15,9 +15,9 @@ micromamba activate convert_env
 python - <<EOF
 from Bio import AlignIO
 AlignIO.convert(
-    "/home/andrea/Documentos/secuencias/Ecuador_alineado.fasta",
+    "/home/andrea/Documentos/secuencias_alineadas/Ecuador_alineado.fasta",
     "fasta",
-    "/home/andrea/Documentos/secuencias/Ecuador.phy",
+    "/home/andrea/Documentos/secuencias_alineadas/Ecuador.phy",
     "phylip-relaxed"
 )
 EOF 
