@@ -32,7 +32,7 @@ micromamba activate figtree_env
 raxmlHPC-PTHREADS \
 -f a \
 -m GTRGAMMA \
--s /home/andrea/Documentos/secuencias/Ecuador.phy \
+-s /home/andrea/Documentos/secuencias_alineadas/Ecuador.phy \
 -n arbol.prueba \
 -w /home/andrea/Documentos/output \
 -T 4 \
