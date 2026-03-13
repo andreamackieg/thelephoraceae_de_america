@@ -6,7 +6,7 @@
 micromamba activate base
 
 #Alinear las secuencias con MAFFT:
-mafft --auto --thread -1 /home/andrea/Documentos/secuencias_curadas/Canada_limpio.fasta > /home/andrea/Documentos/secuencias_curadas/Canada_alineado.fasta
+mafft --auto --thread -1 /home/andrea/Documentos/secuencias_curadas/Canada_limpio.fasta > /home/andrea/Documentos/secuencias_alineadas/Canada_alineado.fasta
 
 #Activar ambiente biophyton:
 micromamba activate convert_env
