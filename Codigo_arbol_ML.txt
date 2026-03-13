@@ -15,12 +15,12 @@ micromamba activate convert_env
 python - <<EOF
 from Bio import AlignIO
 AlignIO.convert(
-    "/home/andrea/Documentos/secuencias_alineadas/Ecuador_alineado.fasta",
-    "fasta",
-    "/home/andrea/Documentos/secuencias_alineadas/Ecuador.phy",
-    "phylip-relaxed"
+"/home/andrea/Documentos/secuencias_alineadas/Canada_alineado.fasta",
+"fasta",
+"/home/andrea/Documentos/secuencias_alineadas/Canada.phy",
+"phylip-relaxed"
 )
-EOF 
+EOF
 
 
 #Luego activar el ambiente de análisis (donde está figtree):
