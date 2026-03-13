@@ -28,9 +28,6 @@ micromamba deactivate
 micromamba activate figtree_env
 
 
-#Los paquetes fueron instalados en micromamba, activar el ambiente figtree:
-micromamba activate figtree_env
-
 #Ejecutar RaxMl:
 raxmlHPC-PTHREADS \
 -f a \
