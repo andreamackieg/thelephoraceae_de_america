@@ -1,0 +1,39 @@
+#Script desarrollado por Andrea Mackie Greene, sirve para asignación de OTUs a partir de secuencias ambientales en formato FASTA. Se utilizó vsearch v2.30.6
+#El siguiente pipeline debe guardarse en: otu_vsearch_pipeline.sh
+#Para correr el pipeline, escribir en la terminal: ./otu_vsearch_pipeline.sh
+
+#!/bin/bash
+
+# ============================
+# OTU clustering con VSEARCH
+# ============================
+
+INPUT="sequences.fasta"
+IDENTITY=0.98
+PREFIX="Thelephoraceae_OTU"
+
+echo "Iniciando clustering OTU con VSEARCH..."
+
+# 1. Clustering de novo
+vsearch --cluster_fast $INPUT \
+  --id $IDENTITY \
+  --centroids ${PREFIX}_centroids.fasta \
+  --uc ${PREFIX}_clusters.uc \
+  --relabel OTU_
+
+echo "Clustering terminado."
+
+# 2. Extraer secuencias representativas (OTUs)
+echo "Secuencias representativas guardadas en:"
+echo "${PREFIX}_centroids.fasta"
+
+# 3. Generar tabla OTU legible (OTU vs secuencia)
+echo "Generando tabla OTU..."
+
+awk '$1 == "H" {print $9 "\t" $10}' ${PREFIX}_clusters.uc > ${PREFIX}_OTU_table.tsv
+
+echo "Tabla OTU generada:"
+echo "${PREFIX}_OTU_table.tsv"
+
+echo "Proceso completo."
+
