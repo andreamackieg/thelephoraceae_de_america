@@ -6,7 +6,10 @@
 micromamba activate base
 
 #Alinear las secuencias con MAFFT:
-mafft --auto --thread -1 /home/andrea/Documentos/secuencias_curadas/Canada_limpio.fasta > /home/andrea/Documentos/secuencias_alineadas/Canada_alineado.fasta
+mafft --localpair --maxiterate 1000 --thread -1 \
+--op 3.0 --ep 0.123 \
+/home/andrea/Documentos/Trabajo_final_SF/secuencias_curadas/Islas_Caribe_alineado.fasta \
+> /home/andrea/Documentos/Trabajo_final_SF/secuencias_alineadas/secuencias_alineadas_mejor.fasta
 
 #Activar ambiente biophyton:
 micromamba activate convert_env
@@ -28,7 +31,7 @@ micromamba deactivate
 micromamba activate figtree_env
 
 
-#Ejecutar RaxMl:
+#Para ejecutar RaxMl debe seleccionarse el modelo adecuado para los datos (puede ser en CIPRES), en este caso se usó GTR:
 raxmlHPC-PTHREADS \
 -f a \
 -m GTRGAMMA \
