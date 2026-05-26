@@ -5,10 +5,12 @@ mafft --auto --leavegappyregion --thread -1 \
 /home/andrea/Documentos/secuencias_curadas/Thelephoraceae_OTUs.fasta \
 > /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_alineado_mafft.fasta
 
-#Con un editor de texto se eliminaron los gaps (-) del alineamiento en mafft
+#Con un editor de texto se eliminaron los gaps (-) del alineamiento en mafft y después eliminar los espacios con:
+awk '/^>/{if(seq) print seq; print; seq=""} !/^>/{gsub(/ /,""); seq=seq$0} END{if(seq) print seq}' /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_alineado_mafft_sin_guiones.fasta > /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_limpio.fasta
 
 
 #Después de esto se realizó alineamiento en muscle
 muscle -super5 \
-/home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_alineado_mafft_sin_guiones.fasta \
--output /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_alineado_muscle_sin_guiones.fasta
+/home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_limpio.fasta \
+-output /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_alineado_muscle.fasta \
+-threads 8
