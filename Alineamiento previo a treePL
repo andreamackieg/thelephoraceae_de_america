@@ -1,0 +1,14 @@
+#Script para alineamiento de secuencias ITS en mafft y en muscle previos a realizar árbol fechado en treePL
+
+#Primero se alinearon secuencias en mafft
+mafft --auto --leavegappyregion --thread -1 \
+/home/andrea/Documentos/secuencias_curadas/Thelephoraceae_OTUs.fasta \
+> /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_alineado_mafft.fasta
+
+#Con un editor de texto se eliminaron los gaps (-) del alineamiento en mafft
+
+
+#Después de esto se realizó alineamiento en muscle
+muscle -super5 \
+/home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_alineado_mafft_sin_guiones.fasta \
+-output /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_alineado_muscle_sin_guiones.fasta
