@@ -1,15 +1,32 @@
 #Script para alineamiento de secuencias ITS en mafft y en muscle previos a realizar árbol fechado en treePL
 
-#Primero se alinearon secuencias en mafft
+#Limpiar espacios y concatenar líneas de secuencias:
+awk '/^>/{if(seq) print seq; print; seq=""} !/^>/{gsub(/ /,""); seq=seq$0} END{if(seq) print seq}' \
+  /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs.fasta \
+  > /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_limpio.fasta
+
+#Para orientar secuencias en un mismo sentido
+vsearch --orient \
+  /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_limpio.fasta \
+  --db /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_limpio.fasta \
+  --fastaout /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_orientado.fasta
+
+#Si se tienen regiones ITS y LSU en la misma secuencia, se puede conservar una sola región con cutadapt, en este caso, yo sólo conservé ITS con cutadapt:
+cutadapt \
+  -a GCATATCAATAAGCGGAGGA \
+  --discard-trimmed \
+  -o /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_soloITS.fasta \
+  /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_orientado.fasta
+
+#Activar ambiente donde están muscle y mafft
+micromamba activate base
+
+#Alineamiento de secuencias en mafft
 mafft --auto --leavegappyregion --thread -1 \
 /home/andrea/Documentos/secuencias_curadas/Thelephoraceae_OTUs.fasta \
 > /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_alineado_mafft.fasta
 
-#Con un editor de texto se eliminaron los gaps (-) del alineamiento en mafft y después eliminar los espacios con:
-awk '/^>/{if(seq) print seq; print; seq=""} !/^>/{gsub(/ /,""); seq=seq$0} END{if(seq) print seq}' /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_alineado_mafft_sin_guiones.fasta > /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_limpio.fasta
-
-
-#Después de esto se realizó alineamiento en muscle
+#Alineamiento en muscle
 muscle -super5 \
 /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_limpio.fasta \
 -output /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_alineado_muscle.fasta \
