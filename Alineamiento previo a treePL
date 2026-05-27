@@ -14,7 +14,6 @@ vsearch --orient \
 #Si se tienen regiones ITS y LSU en la misma secuencia, se puede conservar una sola región con cutadapt, en este caso, yo sólo conservé ITS con cutadapt:
 cutadapt \
   -a GCATATCAATAAGCGGAGGA \
-  --discard-trimmed \
   -o /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_soloITS.fasta \
   /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_orientado.fasta
 
