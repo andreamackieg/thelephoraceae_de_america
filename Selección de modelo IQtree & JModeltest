@@ -1,3 +1,19 @@
 #Script para selección de Modelo en IQtree & JModelTest
 
 #Los paquetes están instalados en el ambiente:
+micromamba activate convert_env
+
+#IQtree:
+iqtree -s /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_alineado_completo_sincolas.fasta \
+  -m MF \
+  -nt 8 \
+  --prefix /home/andrea/Documentos/secuencias_alineadas/modeltest_iqtree
+
+#Buscar mejor modelo:
+grep "Best-fit model" /home/andrea/Documentos/secuencias_alineadas/modeltest_iqtree.iqtree
+
+#JModeltest:
+#abrir JModeltest:
+java -jar /home/andrea/jmodeltest-2.1.10/jModelTest.jar
+
+
