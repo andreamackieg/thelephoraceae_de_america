@@ -30,3 +30,20 @@ muscle -super5 \
 /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_limpio.fasta \
 -output /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_OTUs_alineado_muscle.fasta \
 -threads 8
+
+ó
+
+#Alineamiento ingroup:
+mafft --auto \
+  --leavegappyregion \
+  --thread 8 \
+  /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_ingroup_orientado.fasta \
+  > /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_ingroup_alineado.fasta
+
+#Alineamiento outgroup:
+mafft --auto \
+  --leavegappyregion \
+  --add /home/andrea/Documentos/secuencias_alineadas/outgroups_orientado.fasta \
+  --thread 8 \
+  /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_ingroup_alineado.fasta \
+  > /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_alineado_completo.fasta
