@@ -1,0 +1,74 @@
+#Script desarrollado por Andrea Mackie Greene para realizar un árbol de ML penalizado para realizar una filogenia fechada en treePL
+
+#Paso 1: Bootstrap + mapeado de valores BS
+# ============================================================
+# RAxML - ML + Thorough Bootstrap 
+# ============================================================
+
+# Crear carpeta de output si no existe
+mkdir -p /home/andrea/Documentos/arboles
+
+# Paso 1a: 10 corridas ML independientes (árbol sin BS, para treePL)
+raxmlHPC -f d \
+  -N 10 \
+  -m GTRGAMMA \
+  -s /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_alineado_completo_sincolas.fasta \
+  -w /home/andrea/Documentos/arboles \
+  -n testB \
+  -p 12345 \
+  -o Hymenochaete_tropica_NR_120046_ITS,Hymenochaete_yunnanensis_NR_120045_ITS,Agaricus_arvensis_AJ887993_ITS,Agaricus_pequinii_AJ887991_ITS,Marasmius_oreades_LT716048_ITS,Marasmius_desjardinii_MF630620_ITS1_ITS2,Nidula_niveotomentosa_DQ917654_ITS,Nidula_sp_LT716028_ITS,Russula_vesca_AM113965_ITS,Russula_ochroleuca_AM113964_ITS,Suillus_bovinus_AJ493679_ITS,Suillus_variegatus_AJ272421_ITS,Ganoderma_resinaceum_AM906065_ITS,Ganoderma_lucidum_AM906058_ITS \
+&& \
+
+# Paso 1b: Bootstrap con parada automática autoMRE
+raxmlHPC -f x \
+  -N autoMRE \
+  -m GTRGAMMA \
+  -s /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_alineado_completo_sincolas.fasta \
+  -w /home/andrea/Documentos/arboles \
+  -n testR \
+  -p 12345 \
+  -x 12345 \
+  -o Hymenochaete_tropica_NR_120046_ITS,Hymenochaete_yunnanensis_NR_120045_ITS,Agaricus_arvensis_AJ887993_ITS,Agaricus_pequinii_AJ887991_ITS,Marasmius_oreades_LT716048_ITS,Marasmius_desjardinii_MF630620_ITS1_ITS2,Nidula_niveotomentosa_DQ917654_ITS,Nidula_sp_LT716028_ITS,Russula_vesca_AM113965_ITS,Russula_ochroleuca_AM113964_ITS,Suillus_bovinus_AJ493679_ITS,Suillus_variegatus_AJ272421_ITS,Ganoderma_resinaceum_AM906065_ITS,Ganoderma_lucidum_AM906058_ITS \
+&& \
+
+# Paso 1c: Mapear valores BS sobre el mejor árbol ML
+raxmlHPC -f b \
+  -t /home/andrea/Documentos/arboles/RAxML_bestTree.testB \
+  -z /home/andrea/Documentos/arboles/RAxML_bootstrap.testR \
+  -w /home/andrea/Documentos/arboles \
+  -m GTRGAMMA \
+  -n MLTB_output \
+  -p 12345
+
+echo "===== PASO 1 COMPLETADO ====="
+echo "Árbol para treePL:      /home/andrea/Documentos/arboles/RAxML_bestTree.testB"
+echo "Árbol para publicación: /home/andrea/Documentos/arboles/RAxML_bipartitions.MLTB_output"
+
+#Paso 2: 
+# ============================================================
+# RAxML - Bootstrap con restricción de topología
+# ============================================================
+
+#  Bootstrap estándar con árbol ML como restricción de topología
+# -b: bootstrap estándar
+# -k: imprime branch lengths en los replicados BS
+# -g: usa el mejor árbol ML como restricción de topología
+raxmlHPC -f d \
+  -N autoMRE \
+  -m GTRGAMMA \
+  -s /home/andrea/Documentos/secuencias_alineadas/Thelephoraceae_alineado_completo_sincolas.fasta \
+  -w /home/andrea/Documentos/arboles \
+  -n testB_constrained \
+  -p 12345 \
+  -b 12345 \
+  -k \
+  -g /home/andrea/Documentos/arboles/RAxML_bestTree.testB \
+  -o Hymenochaete_tropica_NR_120046_ITS,Hymenochaete_yunnanensis_NR_120045_ITS,Agaricus_arvensis_AJ887993_ITS,Agaricus_pequinii_AJ887991_ITS,Marasmius_oreades_LT716048_ITS,Marasmius_desjardinii_MF630620_ITS1_ITS2,Nidula_niveotomentosa_DQ917654_ITS,Nidula_sp_LT716028_ITS,Russula_vesca_AM113965_ITS,Russula_ochroleuca_AM113964_ITS,Suillus_bovinus_AJ493679_ITS,Suillus_variegatus_AJ272421_ITS,Ganoderma_resinaceum_AM906065_ITS,Ganoderma_lucidum_AM906058_ITS
+
+echo "===== PASO 2 COMPLETADO ====="
+echo "Bootstrap con restricción: /home/andrea/Documentos/arboles/RAxML_bootstrap.testB_constrained"
+
+# Para que envíe notificación por Telegram al terminar el comando
+curl -s -X POST "https://api.telegram.org/bot<TU_TOKEN>/sendMessage" \
+  -d chat_id="<TU_CHAT_ID>" \
+  -d text=" Paso 2 RAxML terminó. Bootstrap con restricción listo en /home/andrea/Documentos/arboles"
