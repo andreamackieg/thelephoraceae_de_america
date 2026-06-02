@@ -68,6 +68,23 @@ raxmlHPC -f d \
 echo "===== PASO 2 COMPLETADO ====="
 echo "Bootstrap con restricción: /home/andrea/Documentos/arboles/RAxML_bootstrap.testB_constrained"
 
+#Paso 3:
+# ============================================================
+# RAxML - Mapeo BS constrained sobre mejor árbol ML
+# ============================================================
+
+raxmlHPC -f b \
+  -t /home/andrea/Documentos/arboles/RAxML_bestTree.testB \
+  -z /home/andrea/Documentos/arboles/RAxML_bootstrap.testB_constrained \
+  -w /home/andrea/Documentos/arboles \
+  -m GTRGAMMA \
+  -n MLTB_constrained_output \
+  -p 12345
+
+echo "===== PASO 3 COMPLETADO ====="
+echo "Árbol con BS constrained: /home/andrea/Documentos/arboles/RAxML_bipartitions.MLTB_constrained_output"
+
+
 # Para que envíe notificación por Telegram al terminar el comando
 curl -s -X POST "https://api.telegram.org/bot<TU_TOKEN>/sendMessage" \
   -d chat_id="<TU_CHAT_ID>" \
