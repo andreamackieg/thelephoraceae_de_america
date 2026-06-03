@@ -16,7 +16,7 @@ raxmlHPC -f d \
   -w /home/andrea/Documentos/arboles \
   -n testB \
   -p 12345 \
-  -o Hymenochaete_tropica_NR_120046_ITS,Hymenochaete_yunnanensis_NR_120045_ITS,Agaricus_arvensis_AJ887993_ITS,Agaricus_pequinii_AJ887991_ITS,Marasmius_oreades_LT716048_ITS,Marasmius_desjardinii_MF630620_ITS1_ITS2,Nidula_niveotomentosa_DQ917654_ITS,Nidula_sp_LT716028_ITS,Russula_vesca_AM113965_ITS,Russula_ochroleuca_AM113964_ITS,Suillus_bovinus_AJ493679_ITS,Suillus_variegatus_AJ272421_ITS,Ganoderma_resinaceum_AM906065_ITS,Ganoderma_lucidum_AM906058_ITS \
+  -o Hymenochaete_tropica_NR_120046_ITS,Hymenochaete_yunnanensis_NR_120045_ITS \
 && \
 
 # Paso 1b: Bootstrap con parada automática autoMRE
@@ -28,7 +28,7 @@ raxmlHPC -f x \
   -n testR \
   -p 12345 \
   -x 12345 \
-  -o Hymenochaete_tropica_NR_120046_ITS,Hymenochaete_yunnanensis_NR_120045_ITS,Agaricus_arvensis_AJ887993_ITS,Agaricus_pequinii_AJ887991_ITS,Marasmius_oreades_LT716048_ITS,Marasmius_desjardinii_MF630620_ITS1_ITS2,Nidula_niveotomentosa_DQ917654_ITS,Nidula_sp_LT716028_ITS,Russula_vesca_AM113965_ITS,Russula_ochroleuca_AM113964_ITS,Suillus_bovinus_AJ493679_ITS,Suillus_variegatus_AJ272421_ITS,Ganoderma_resinaceum_AM906065_ITS,Ganoderma_lucidum_AM906058_ITS \
+  -o Hymenochaete_tropica_NR_120046_ITS,Hymenochaete_yunnanensis_NR_120045_ITS \
 && \
 
 # Paso 1c: Mapear valores BS sobre el mejor árbol ML
@@ -63,7 +63,7 @@ raxmlHPC -f d \
   -b 12345 \
   -k \
   -g /home/andrea/Documentos/arboles/RAxML_bestTree.testB \
-  -o Hymenochaete_tropica_NR_120046_ITS,Hymenochaete_yunnanensis_NR_120045_ITS,Agaricus_arvensis_AJ887993_ITS,Agaricus_pequinii_AJ887991_ITS,Marasmius_oreades_LT716048_ITS,Marasmius_desjardinii_MF630620_ITS1_ITS2,Nidula_niveotomentosa_DQ917654_ITS,Nidula_sp_LT716028_ITS,Russula_vesca_AM113965_ITS,Russula_ochroleuca_AM113964_ITS,Suillus_bovinus_AJ493679_ITS,Suillus_variegatus_AJ272421_ITS,Ganoderma_resinaceum_AM906065_ITS,Ganoderma_lucidum_AM906058_ITS
+  -o Hymenochaete_tropica_NR_120046_ITS,Hymenochaete_yunnanensis_NR_120045_ITS
 
 echo "===== PASO 2 COMPLETADO ====="
 echo "Bootstrap con restricción: /home/andrea/Documentos/arboles/RAxML_bootstrap.testB_constrained"
