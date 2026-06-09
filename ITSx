@@ -21,3 +21,29 @@ print(f"Total original:        {len(registros)}")
 print(f"Conservadas (≥350 pb): {len(filtradas)}")
 print(f"Descartadas (<350 pb): {len(registros) - len(filtradas)}")
 EOF
+
+#Para separar marcadores (ITS y LSU)
+#Correr ITSx
+ITSx -i /home/andrea/Documentos/secuencias_finales/secuencias_filtradas.fasta \
+     -o /home/andrea/Documentos/secuencias_finales/itsx_out \
+     --save_regions all \
+     -t fungi \
+     --cpu 4 \
+     --preserve T
+
+#Generar dos archivos distintos
+cd /home/andrea/Documentos/secuencias_finales
+
+# Archivo 1: solo ITS
+cp itsx_out.full.fasta solo_ITS.fasta
+echo "solo_ITS.fasta generado"
+grep -c "^>" solo_ITS.fasta | xargs echo "  Secuencias ITS:"
+
+# Archivo 2: LSU
+if [ -f itsx_out.LSU.fasta ]; then
+    cp itsx_out.LSU.fasta LSU.fasta
+    echo "LSU.fasta generado"
+    grep -c "^>" LSU.fasta | xargs echo "  Regiones LSU encontradas:"
+else
+    echo "No se detectó ninguna región LSU"
+fi
