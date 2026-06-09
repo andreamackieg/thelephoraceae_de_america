@@ -1,0 +1,23 @@
+#Script para eliminar secuencias menores a 350 pb y separar regiones ITS y LSU de un archivo FASTA
+#Desarrollado por Andrea Mackie Greene
+
+#Verificar si ITSx está instalado
+conda activate convert_env
+ITSx --help
+
+#Para eliminar secuencias menores a 350 pb
+#
+python3 - << 'EOF'
+from Bio import SeqIO
+
+entrada = "/home/andrea/Documentos/secuencias/secuencias_todas_limpio.fasta"
+salida  = "/home/andrea/Documentos/secuencias_finales/secuencias_filtradas.fasta"
+
+registros = list(SeqIO.parse(entrada, "fasta"))
+filtradas = [r for r in registros if len(r.seq) >= 350]
+
+SeqIO.write(filtradas, salida, "fasta")
+print(f"Total original:        {len(registros)}")
+print(f"Conservadas (≥350 pb): {len(filtradas)}")
+print(f"Descartadas (<350 pb): {len(registros) - len(filtradas)}")
+EOF
