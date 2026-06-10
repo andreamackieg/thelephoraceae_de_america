@@ -31,7 +31,7 @@ ITSx -i /home/andrea/Documentos/secuencias_finales/secuencias_filtradas.fasta \
      --cpu 4 \
      --preserve T
 
-#Generar dos archivos distintos uno para cada marcador
+#Para generar dos archivos fasta distintos (uno para cada marcador) y eliminar las secuencias cortas (menores a 350 pb)
 
 python3 << 'EOF'
 from Bio import SeqIO
@@ -41,6 +41,8 @@ seqs = {r.id: r for r in SeqIO.parse(
 
 its_records = []
 lsu_records = []
+its_cortas = 0
+lsu_cortas = 0
 sin_its = 0
 sin_lsu = 0
 
@@ -58,7 +60,7 @@ with open("/home/andrea/Documentos/secuencias_finales/itsx_out.positions.txt") a
 
         seq = seqs[seq_id]
 
-        # Extraer ITS (ITS1 + 5.8S + ITS2)
+        # Extraer ITS (ITS1 + 5.8S + ITS2, solo >= 350 pb)
         its1_start = its2_end = None
         for campo in info.split("\t"):
             campo = campo.strip()
@@ -69,14 +71,17 @@ with open("/home/andrea/Documentos/secuencias_finales/itsx_out.positions.txt") a
 
         if its1_start is not None and its2_end is not None:
             its_seq = seq[its1_start:its2_end]
-            its_seq.id = seq.id
-            its_seq.name = ""
-            its_seq.description = seq.description
-            its_records.append(its_seq)
+            if len(its_seq) >= 350:
+                its_seq.id = seq.id
+                its_seq.name = ""
+                its_seq.description = seq.description
+                its_records.append(its_seq)
+            else:
+                its_cortas += 1
         else:
             sin_its += 1
 
-        # Extraer LSU
+        # Extraer LSU (solo >= 350 pb)
         lsu_start = lsu_end = None
         for campo in info.split("\t"):
             campo = campo.strip()
@@ -86,19 +91,24 @@ with open("/home/andrea/Documentos/secuencias_finales/itsx_out.positions.txt") a
 
         if lsu_start is not None and lsu_end is not None:
             lsu_seq = seq[lsu_start:lsu_end]
-            lsu_seq.id = seq.id
-            lsu_seq.name = ""
-            lsu_seq.description = seq.description
-            lsu_records.append(lsu_seq)
+            if len(lsu_seq) >= 350:
+                lsu_seq.id = seq.id
+                lsu_seq.name = ""
+                lsu_seq.description = seq.description
+                lsu_records.append(lsu_seq)
+            else:
+                lsu_cortas += 1
         else:
             sin_lsu += 1
 
 SeqIO.write(its_records, "/home/andrea/Documentos/secuencias_finales/solo_ITS.fasta", "fasta")
 SeqIO.write(lsu_records, "/home/andrea/Documentos/secuencias_finales/LSU.fasta", "fasta")
 
-print(f"Total secuencias procesadas: {len(its_records) + sin_its}")
+print(f"Total secuencias procesadas: {len(its_records) + its_cortas + sin_its}")
 print(f"✔ solo_ITS.fasta  → {len(its_records)} secuencias")
-print(f"✔ LSU.fasta       → {len(lsu_records)} secuencias")
+print(f"  ITS descartadas (<350 pb): {its_cortas}")
 print(f"  Sin ITS detectado: {sin_its}")
+print(f"✔ LSU.fasta       → {len(lsu_records)} secuencias")
+print(f"  LSU descartadas (<350 pb): {lsu_cortas}")
 print(f"  Sin LSU detectado: {sin_lsu}")
 EOF
