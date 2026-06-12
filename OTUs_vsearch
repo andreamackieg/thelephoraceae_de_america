@@ -27,13 +27,11 @@ if ! command -v vsearch &>/dev/null; then
     exit 1
 fi
 
-# --- Verificar archivo de entrada ---
 if [[ ! -f "$INPUT" ]]; then
     log ERROR "Archivo de entrada no encontrado: $INPUT"
     exit 1
 fi
 
-# --- Crear directorio de salida si no existe ---
 mkdir -p "$OUTDIR"
 
 log INFO "Iniciando clustering OTU con VSEARCH..."
@@ -42,27 +40,54 @@ log INFO "Directorio de salida: $OUTDIR"
 log INFO "Identidad           : $IDENTITY"
 log INFO "Prefijo de salida   : $PREFIX"
 
-# --- 1. Clustering de novo ---
+# --- 1. Clustering de novo (sin --relabel para conservar títulos originales) ---
 log INFO "Ejecutando clustering..."
 vsearch --cluster_fast "$INPUT" \
     --id "$IDENTITY" \
     --centroids "$OUTDIR/${PREFIX}_centroids.fasta" \
-    --uc "$OUTDIR/${PREFIX}_clusters.uc" \
-    --relabel OTU_
+    --uc "$OUTDIR/${PREFIX}_clusters.uc"
 
 log INFO "Clustering terminado. Centroides en: $OUTDIR/${PREFIX}_centroids.fasta"
 
-# --- 2. Generar tabla OTU (todas las secuencias con su OTU asignada) ---
+# --- 2. Generar tabla OTU con numeración y título original ---
 log INFO "Generando tabla de asignación OTU..."
 
-awk 'BEGIN {OFS="\t"; print "Secuencia\tOTU"}
-     $1 == "S" {print $9, $9}
-     $1 == "H" {print $9, $10}' \
+# Primero construir diccionario: centroide -> OTU_N (en orden de aparición)
+# Luego asignar a cada secuencia (S y H) su OTU correspondiente
+awk 'BEGIN {OFS="\t"; print "Secuencia\tOTU"; n=0}
+     $1 == "S" {
+         n++
+         otu[$9] = "OTU_" n
+         print $9, "OTU_" n
+     }
+     $1 == "H" {
+         print $9, otu[$10]
+     }' \
     "$OUTDIR/${PREFIX}_clusters.uc" > "$OUTDIR/${PREFIX}_OTU_table.tsv"
 
 log INFO "Tabla de asignación generada: $OUTDIR/${PREFIX}_OTU_table.tsv"
 
-# --- 3. Resumen ---
+# --- 3. Agregar etiqueta _OTUx al header de los centroides ---
+log INFO "Etiquetando centroides con su OTU asignada..."
+
+awk 'NR==FNR {
+         if (NR>1) otu[$1]=$2
+         next
+     }
+     /^>/ {
+         id=substr($1,2)
+         if (id in otu) print ">" id "_" otu[id]
+         else print $0
+         next
+     }
+     { print }' \
+    "$OUTDIR/${PREFIX}_OTU_table.tsv" \
+    "$OUTDIR/${PREFIX}_centroids.fasta" \
+    > "$OUTDIR/${PREFIX}_centroids_etiquetados.fasta"
+
+log INFO "Centroides etiquetados en: $OUTDIR/${PREFIX}_centroids_etiquetados.fasta"
+
+# --- 4. Resumen ---
 n_otus=$(grep -c "^>" "$OUTDIR/${PREFIX}_centroids.fasta")
 n_seqs=$(awk '$1 == "S" || $1 == "H"' "$OUTDIR/${PREFIX}_clusters.uc" | wc -l)
 
