@@ -1,39 +1,71 @@
-#Script desarrollado por Andrea Mackie Greene, sirve para asignación de OTUs a partir de secuencias ambientales en formato FASTA. Se utilizó vsearch v2.30.6
-#El siguiente pipeline debe guardarse en: otu_vsearch_pipeline.sh
-#Para correr el pipeline, escribir en la terminal: ./otu_vsearch_pipeline.sh
-
 #!/bin/bash
-
-# ============================
+# ============================================================
 # OTU clustering con VSEARCH
-# ============================
+# Script desarrollado por Andrea Mackie Greene
+# Asignación de OTUs a partir de secuencias ambientales (FASTA)
+# Herramienta: vsearch v2.30.6
+# Uso: ./otu_vsearch_pipeline.sh
+# ============================================================
 
-INPUT="sequences.fasta"
+set -euo pipefail
+
+# --- Parámetros ---
+INPUT="/home/andrea/Documentos/secuencias_finales/solo_ITS.fasta"
+OUTDIR="/home/andrea/Documentos/OTUs_98"
 IDENTITY=0.98
 PREFIX="Thelephoraceae_OTU"
 
-echo "Iniciando clustering OTU con VSEARCH..."
+# --- Función de logging ---
+log() {
+    local level="$1"; shift
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $*"
+}
 
-# 1. Clustering de novo
-vsearch --cluster_fast $INPUT \
-  --id $IDENTITY \
-  --centroids ${PREFIX}_centroids.fasta \
-  --uc ${PREFIX}_clusters.uc \
-  --relabel OTU_
+# --- Verificar dependencias ---
+if ! command -v vsearch &>/dev/null; then
+    log ERROR "vsearch no encontrado. Verifica que esté instalado y en el PATH."
+    exit 1
+fi
 
-echo "Clustering terminado."
+# --- Verificar archivo de entrada ---
+if [[ ! -f "$INPUT" ]]; then
+    log ERROR "Archivo de entrada no encontrado: $INPUT"
+    exit 1
+fi
 
-# 2. Extraer secuencias representativas (OTUs)
-echo "Secuencias representativas guardadas en:"
-echo "${PREFIX}_centroids.fasta"
+# --- Crear directorio de salida si no existe ---
+mkdir -p "$OUTDIR"
 
-# 3. Generar tabla OTU legible (OTU vs secuencia)
-echo "Generando tabla OTU..."
+log INFO "Iniciando clustering OTU con VSEARCH..."
+log INFO "Archivo de entrada  : $INPUT"
+log INFO "Directorio de salida: $OUTDIR"
+log INFO "Identidad           : $IDENTITY"
+log INFO "Prefijo de salida   : $PREFIX"
 
-awk '$1 == "H" {print $9 "\t" $10}' ${PREFIX}_clusters.uc > ${PREFIX}_OTU_table.tsv
+# --- 1. Clustering de novo ---
+log INFO "Ejecutando clustering..."
+vsearch --cluster_fast "$INPUT" \
+    --id "$IDENTITY" \
+    --centroids "$OUTDIR/${PREFIX}_centroids.fasta" \
+    --uc "$OUTDIR/${PREFIX}_clusters.uc" \
+    --relabel OTU_
 
-echo "Tabla OTU generada:"
-echo "${PREFIX}_OTU_table.tsv"
+log INFO "Clustering terminado. Centroides en: $OUTDIR/${PREFIX}_centroids.fasta"
 
-echo "Proceso completo."
+# --- 2. Generar tabla OTU (todas las secuencias con su OTU asignada) ---
+log INFO "Generando tabla de asignación OTU..."
 
+awk 'BEGIN {OFS="\t"; print "Secuencia\tOTU"}
+     $1 == "S" {print $9, $9}
+     $1 == "H" {print $9, $10}' \
+    "$OUTDIR/${PREFIX}_clusters.uc" > "$OUTDIR/${PREFIX}_OTU_table.tsv"
+
+log INFO "Tabla de asignación generada: $OUTDIR/${PREFIX}_OTU_table.tsv"
+
+# --- 3. Resumen ---
+n_otus=$(grep -c "^>" "$OUTDIR/${PREFIX}_centroids.fasta")
+n_seqs=$(awk '$1 == "S" || $1 == "H"' "$OUTDIR/${PREFIX}_clusters.uc" | wc -l)
+
+log INFO "OTUs generados              : $n_otus"
+log INFO "Secuencias totales asignadas: $n_seqs"
+log INFO "Proceso completo."
