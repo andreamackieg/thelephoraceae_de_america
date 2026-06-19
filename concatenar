@@ -1,4 +1,4 @@
-# Concatenación de alineamientos multigénicos (ITS, LSU, RPB2) 
+#Concatenación de alineamientos multigénicos (ITS, LSU, RPB2) 
 
 #Los alineamientos individuales de ITS, LSU y RPB2 se concatenaron usando [AMAS](https://github.com/marekborowiec/AMAS) (Borowiec, 2016, *PeerJ*).
 
