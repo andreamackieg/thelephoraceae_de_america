@@ -1,0 +1,23 @@
+# Concatenación de alineamientos multigénicos (ITS, LSU, RPB2) 
+
+#Los alineamientos individuales de ITS, LSU y RPB2 se concatenaron usando [AMAS](https://github.com/marekborowiec/AMAS) (Borowiec, 2016, *PeerJ*).
+
+## Instalación
+
+```bash
+pip install amas
+```
+
+## Uso
+
+```bash
+python -m amas.AMAS concat -i ITS_alineado_sincolas.fas LSU_alineado_sincolas.fas RPB2_alineado_sincolas.fas -f fasta -d dna -t concatenado.fas -p particiones.txt
+```
+
+Esto genera:
+- `concatenado.fas`: matriz concatenada en FASTA, uniendo las secuencias por nombre de taxón. Los taxones sin secuencia en algún gen quedan rellenos con `?` en las columnas correspondientes.
+- `particiones.txt`: coordenadas de cada gen dentro de la matriz concatenada (formato RAxML-style, compatible con IQ-TREE).
+
+## Cita
+
+> Borowiec, M.L. (2016). AMAS: a fast tool for alignment manipulation and computing of summary statistics. *PeerJ* 4:e1660. https://doi.org/10.7717/peerj.1660
