@@ -11,12 +11,12 @@ pip install amas
 ## Uso
 
 ```bash
-python -m amas.AMAS concat -i ITS_alineado_sincolas.fas LSU_alineado_sincolas.fas RPB2_alineado_sincolas.fas -f fasta -d dna -t concatenado.fas -p particiones.txt
+python -m amas.AMAS concat -i ITS_alineado_sincolas.fas LSU_alineado_sincolas.fas RPB2_alineado_sincolas.fas -f fasta -d dna -t concatenado.fas -p particiones_raxml.txt --part-format raxml
 ```
 
-Esto genera:
+#Esto genera:
 - `concatenado.fas`: matriz concatenada en FASTA, uniendo las secuencias por nombre de taxón. Los taxones sin secuencia en algún gen quedan rellenos con `?` en las columnas correspondientes.
-- `particiones.txt`: coordenadas de cada gen dentro de la matriz concatenada (formato RAxML-style, compatible con IQ-TREE).
+- `particiones_raxml.txt`: coordenadas de cada gen dentro de la matriz concatenada, en formato RAxML (`DNA, nombre_gen = inicio-fin`).
 
 ## Cita
 
