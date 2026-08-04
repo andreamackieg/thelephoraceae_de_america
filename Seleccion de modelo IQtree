@@ -1,0 +1,71 @@
+#!/bin/bash
+# =========================================================
+# SELECCIÓN DE MODELO DE SUSTITUCIÓN Y ESQUEMA DE PARTICIÓN
+# Thelephoraceae — Análisis filogenético
+# IQ-TREE v2.4.0 — ModelFinder + PartitionFinder (MFP+MERGE)
+#
+# Autora: Andrea Mackie Greene
+#
+# ---------------------------------------------------------------------------
+# ARCHIVOS DE ENTRADA
+# ---------------------------------------------------------------------------
+#   concatenado_v2.fas
+#       Superalineamiento concatenado
+#       2,868 taxones × 4,016 columnas
+#       Particiones por posición:
+#         ITS  : columnas    1 – 1825
+#         LSU  : columnas 1826 – 3308
+#         RPB2 : columnas 3309 – 4016
+#
+#   particiones_v2_raxmlfmt.txt
+#       Esquema de partición inicial en formato RAxML (3 particiones, 1 por gen)
+#
+# ---------------------------------------------------------------------------
+# ARCHIVOS DE SALIDA PRINCIPALES
+# ---------------------------------------------------------------------------
+#   best_partition_scheme.iqtree          — reporte completo del análisis
+#   best_partition_scheme.best_scheme     — partición óptima (formato RAxML)
+#   best_partition_scheme.best_scheme.nex — partición óptima (formato NEXUS)
+#   best_partition_scheme.best_model.nex  — modelos con parámetros estimados
+#   best_partition_scheme.treefile        — árbol ML sin bootstrap (árbol guía)
+#
+# ---------------------------------------------------------------------------
+# PARÁMETROS
+# ---------------------------------------------------------------------------
+#   -m MFP+MERGE   : ModelFinder con evaluación de fusión de particiones
+#   -rcluster 10   : reducir espacio de búsqueda al 10 % de esquemas de
+#                    partición (rclusterf, recomendado para matrices grandes)
+#   -nt AUTO       : detectar automáticamente el número de hilos disponibles
+#   -crit BIC      : criterio de selección de modelo (Bayesian Information
+#                    Criterion; penaliza complejidad, preferido sobre AIC/AICc
+#                    en matrices grandes)
+#
+# ---------------------------------------------------------------------------
+# RESULTADO OBTENIDO
+# ---------------------------------------------------------------------------
+#   Esquema óptimo : 3 particiones separadas
+#                    (ninguna fusión redujo el BIC)
+#   BIC final      : 424,051.800
+#   lnL            : -188,065.305
+#
+#   Modelos seleccionados por partición:
+#     ITS  (col.    1 – 1825) : TIMe+R10
+#     LSU  (col. 1826 – 3308) : TIM3+F+I+R3
+#     RPB2 (col. 3309 – 4016) : TIM3e+I+R3
+#
+# ---------------------------------------------------------------------------
+# RECURSOS COMPUTACIONALES
+# ---------------------------------------------------------------------------
+#   Tiempo de cómputo : ~26 h 38 min
+#   Entorno           : Windows, 8 GB RAM, 1 hilo
+#
+# =========================================================
+
+iqtree2 \
+    -s concatenado_v2.fas \
+    -p particiones_v2_raxmlfmt.txt \
+    -m MFP+MERGE \
+    -rcluster 10 \
+    -crit BIC \
+    -nt AUTO \
+    -pre best_partition_scheme
