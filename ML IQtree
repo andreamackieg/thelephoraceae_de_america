@@ -1,0 +1,292 @@
+#!/bin/bash
+# =========================================================
+# INFERENCIA FILOGENÉTICA ML + BOOTSTRAP - Thelephoraceae
+# Protocolo de dos pasos (Maurin 2020) adaptado a IQ-TREE 2.4.0
+#
+# CARACTERÍSTICAS DE ROBUSTEZ:
+#   - Secretos leídos de grid_secrets.env (transferido por HTCondor)
+#   - Retome automático desde .ckp.gz respaldado en MinIO
+#   - Checkpoint periódico a MinIO cada 60 min (proceso en background)
+#   - Notificaciones Telegram: arranque/retomado, checkpoint, fin, SIGTERM
+#   - -T 8 fijo (evita overhead de auto-tuning ~32 min)
+#
+# Step 1: Árbol ML LIBRE definitivo (referencia para treePL y Step 2)
+# Step 2: Bootstrap no-paramétrico 1000 réplicas restringido (-g) al ML
+#
+# Outgroup: Dacrymyces_sp, Dacryopinax_spathularia
+# =========================================================
+
+set -o pipefail
+
+# =========================================================
+# PARÁMETROS AJUSTABLES
+# =========================================================
+N_BOOTSTRAP=200        # réplicas bootstrap no-paramétrico (protocolo Maurin)
+THREADS=1               # -T fijo
+CKPT_INTERVAL=3600      # segundos entre respaldos a MinIO (60 min)
+SEED=12345
+
+# Rutas MinIO
+S3_DATA="almacenamiento/sustratos/data"
+S3_CKPT="almacenamiento/sustratos/checkpoints"
+
+# =========================================================
+# CARGAR SECRETOS
+# =========================================================
+if [ -f "grid_secrets.env" ]; then
+    source "grid_secrets.env"
+else
+    echo "ERROR: no se encontró grid_secrets.env" >&2
+    exit 1
+fi
+: "${MINIO_ACCESS_KEY:?falta MINIO_ACCESS_KEY}"
+: "${MINIO_SECRET_KEY:?falta MINIO_SECRET_KEY}"
+: "${TELEGRAM_TOKEN:?falta TELEGRAM_TOKEN}"
+: "${TELEGRAM_CHAT_ID:?falta TELEGRAM_CHAT_ID}"
+
+MCLI=/usr/local/bin/mcli
+IQTREE=./iqtree2
+CHECKPOINT=./checkpoint.txt
+
+# =========================================================
+# CONFIGURAR ACCESO S3
+# =========================================================
+mkdir -p ~/.mcli
+cat > ~/.mcli/config.json << MCCONFIG
+{
+    "version": "10",
+    "aliases": {
+        "almacenamiento": {
+            "url": "https://s3.grid.unam.mx:9000",
+            "accessKey": "${MINIO_ACCESS_KEY}",
+            "secretKey": "${MINIO_SECRET_KEY}",
+            "api": "S3v4",
+            "path": "dns"
+        }
+    }
+}
+MCCONFIG
+chmod 600 ~/.mcli/config.json
+
+# DIAGNÓSTICO INICIAL
+echo "arranque: $(date)" > /tmp/diag.txt
+echo "pwd: $(pwd)" >> /tmp/diag.txt
+ls -la >> /tmp/diag.txt
+echo "secrets: MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:0:4}***" >> /tmp/diag.txt
+$MCLI cp /tmp/diag.txt "$S3_DATA/diag_iqtree.txt" > /dev/null 2>&1 || true
+
+# =========================================================
+# TELEGRAM
+# =========================================================
+send_telegram() {
+    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+        -d chat_id="${TELEGRAM_CHAT_ID}" \
+        -d text="$1" \
+        -d parse_mode="Markdown" > /dev/null 2>&1
+}
+
+# =========================================================
+# CAPTURA DE SIGTERM
+# =========================================================
+on_sigterm() {
+    send_telegram "⚠️ *Job recibió SIGTERM (posible fin de wall-time)*
+Guardando checkpoint a MinIO antes de terminar...
+Paso actual: $(cat $CHECKPOINT 2>/dev/null || echo '?')"
+    backup_checkpoints_now
+    send_telegram "💾 Checkpoint respaldado. El job se re-encolará y retomará desde aquí."
+    exit 143
+}
+trap on_sigterm SIGTERM
+
+# =========================================================
+# FUNCIONES DE CHECKPOINT A MinIO
+# =========================================================
+
+backup_checkpoints_now() {
+    [ -f "$CHECKPOINT" ] && $MCLI cp "$CHECKPOINT" "$S3_CKPT/checkpoint.txt" > /dev/null 2>&1
+    if [ -f output_step1/thelephoraceae_step1.ckp.gz ]; then
+        $MCLI cp output_step1/thelephoraceae_step1.ckp.gz "$S3_CKPT/thelephoraceae_step1.ckp.gz" > /dev/null 2>&1
+    fi
+    if [ -f output_step2/thelephoraceae_step2.ckp.gz ]; then
+        $MCLI cp output_step2/thelephoraceae_step2.ckp.gz "$S3_CKPT/thelephoraceae_step2.ckp.gz" > /dev/null 2>&1
+    fi
+    if [ -f output_step1/thelephoraceae_bestML.tre ]; then
+        $MCLI cp output_step1/thelephoraceae_bestML.tre "$S3_CKPT/thelephoraceae_bestML.tre" > /dev/null 2>&1
+    fi
+    if [ -f output_step2/thelephoraceae_step2.boottrees ]; then
+        $MCLI cp output_step2/thelephoraceae_step2.boottrees "$S3_CKPT/thelephoraceae_step2.boottrees" > /dev/null 2>&1
+    fi
+}
+
+checkpoint_daemon() {
+    while true; do
+        sleep "$CKPT_INTERVAL"
+        backup_checkpoints_now
+        PASO=$(cat $CHECKPOINT 2>/dev/null || echo '?')
+        send_telegram "💾 *Checkpoint respaldado a MinIO*
+Paso actual: ${PASO} | $(date '+%H:%M %d/%m')"
+    done
+}
+
+restore_checkpoints_from_minio() {
+    mkdir -p output_step1 output_step2
+    $MCLI cp "$S3_CKPT/checkpoint.txt" "$CHECKPOINT" > /dev/null 2>&1
+    $MCLI cp "$S3_CKPT/thelephoraceae_step1.ckp.gz" output_step1/thelephoraceae_step1.ckp.gz > /dev/null 2>&1
+    $MCLI cp "$S3_CKPT/thelephoraceae_step2.ckp.gz" output_step2/thelephoraceae_step2.ckp.gz > /dev/null 2>&1
+    $MCLI cp "$S3_CKPT/thelephoraceae_bestML.tre" output_step1/thelephoraceae_bestML.tre > /dev/null 2>&1
+}
+
+get_checkpoint() { [ -f "$CHECKPOINT" ] && cat "$CHECKPOINT" || echo "0"; }
+set_checkpoint() { echo "$1" > "$CHECKPOINT"; backup_checkpoints_now; }
+
+# =========================================================
+# PASO 0 — DEPENDENCIAS, DATOS Y DETECCIÓN DE RETOME
+# =========================================================
+
+if [ ! -f "$MCLI" ]; then
+    send_telegram "❌ *Error: mcli no encontrado* ($MCLI). Job abortado."
+    exit 1
+fi
+
+restore_checkpoints_from_minio
+PASO_ACTUAL=$(get_checkpoint)
+
+$MCLI cp "$S3_DATA/iqtree2" ./iqtree2 > /dev/null 2>&1
+chmod +x ./iqtree2
+$MCLI cp "$S3_DATA/concatenado_v2.fas" ./concatenado_v2.fas > /dev/null 2>&1
+$MCLI cp "$S3_DATA/best_partition_scheme.best_model.nex" ./best_partition_scheme.best_model.nex > /dev/null 2>&1
+
+if [ ! -x "./iqtree2" ] || [ ! -s "./concatenado_v2.fas" ] || [ ! -s "./best_partition_scheme.best_model.nex" ]; then
+    send_telegram "❌ *Error: binario o archivos de entrada no disponibles*
+Verifica $S3_DATA/ en MinIO. Job abortado."
+    exit 1
+fi
+
+if [ -f output_step1/thelephoraceae_step1.ckp.gz ] || [ -f output_step2/thelephoraceae_step2.ckp.gz ] || [ "$PASO_ACTUAL" != "0" ]; then
+    send_telegram "🔄 *IQ-TREE — RETOMANDO (re-encolado OK)*
+Estado recuperado de MinIO.
+Paso actual: ${PASO_ACTUAL}
+IQ-TREE continuará desde su último checkpoint interno."
+else
+    send_telegram "🍄 *IQ-TREE — INICIANDO desde cero*
+Verificando dependencias... OK.
+IQ-TREE: $(./iqtree2 --version 2>&1 | head -1)
+Step 1: búsqueda ML LIBRE definitiva (-T ${THREADS})..."
+fi
+
+checkpoint_daemon &
+CKPT_PID=$!
+trap "kill $CKPT_PID 2>/dev/null" EXIT
+
+# =========================================================
+# STEP 1 — Árbol ML LIBRE definitivo
+# =========================================================
+if [ "$PASO_ACTUAL" = "0" ] || [ "$PASO_ACTUAL" = "1" ]; then
+
+    [ "$PASO_ACTUAL" = "0" ] && set_checkpoint "1"
+
+    INICIO_S1=$(date +%s)
+
+    $IQTREE \
+        -s concatenado_v2.fas \
+        -p best_partition_scheme.best_model.nex \
+        -o Dacrymyces_sp,Dacryopinax_spathularia \
+        -T $THREADS \
+        -pre output_step1/thelephoraceae_step1 \
+        --seed $SEED
+
+    EXIT_S1=$?
+    TIEMPO_S1=$(( ($(date +%s) - INICIO_S1) / 60 ))
+
+    if [ $EXIT_S1 -ne 0 ]; then
+        backup_checkpoints_now
+        send_telegram "❌ *Step 1 (ML) terminó con código $EXIT_S1*
+Checkpoint respaldado. Al re-encolarse retomará desde aquí."
+        exit 1
+    fi
+
+    cp output_step1/thelephoraceae_step1.treefile output_step1/thelephoraceae_bestML.tre
+    $MCLI cp output_step1/thelephoraceae_bestML.tre "$S3_CKPT/thelephoraceae_bestML.tre" > /dev/null 2>&1
+    set_checkpoint "2"
+    PASO_ACTUAL="2"
+
+    send_telegram "✅ *Step 1 completado — árbol ML LIBRE listo*
+Tiempo: ${TIEMPO_S1} min
+\`thelephoraceae_bestML.tre\` → referencia para treePL y Step 2.
+Iniciando Step 2: bootstrap no-paramétrico ${N_BOOTSTRAP} réplicas..."
+fi
+
+# =========================================================
+# STEP 2 — Bootstrap no-paramétrico restringido al ML del Step 1
+# =========================================================
+if [ "$PASO_ACTUAL" = "2" ]; then
+
+    if [ ! -f "output_step1/thelephoraceae_bestML.tre" ]; then
+        send_telegram "❌ *Error: árbol ML no encontrado para Step 2*
+Revisa que thelephoraceae_bestML.tre esté en MinIO checkpoints."
+        exit 1
+    fi
+
+    INICIO_S2=$(date +%s)
+
+    $IQTREE \
+        -s concatenado_v2.fas \
+        -p best_partition_scheme.best_model.nex \
+        -b $N_BOOTSTRAP \
+        -g output_step1/thelephoraceae_bestML.tre \
+        -o Dacrymyces_sp,Dacryopinax_spathularia \
+        -T $THREADS \
+        -pre output_step2/thelephoraceae_step2 \
+        --seed $SEED
+
+    EXIT_S2=$?
+    TIEMPO_S2=$(( ($(date +%s) - INICIO_S2) / 60 ))
+
+    if [ $EXIT_S2 -ne 0 ]; then
+        backup_checkpoints_now
+        send_telegram "❌ *Step 2 (bootstrap) terminó con código $EXIT_S2*
+Checkpoint respaldado. Al re-encolarse retomará desde la última réplica guardada."
+        exit 1
+    fi
+
+    [ -f output_step2/thelephoraceae_step2.boottrees ] && \
+        cp output_step2/thelephoraceae_step2.boottrees output_step2/thelephoraceae_boottrees.tre
+    [ -f output_step2/thelephoraceae_step2.contree ] && \
+        cp output_step2/thelephoraceae_step2.contree output_step2/thelephoraceae_bipartitions.tre
+
+    send_telegram "📤 *Step 2 completo — subiendo resultados a MinIO...*"
+    $MCLI cp output_step2/thelephoraceae_boottrees.tre "$S3_CKPT/thelephoraceae_boottrees.tre" > /dev/null 2>&1
+    $MCLI cp output_step2/thelephoraceae_bipartitions.tre "$S3_CKPT/thelephoraceae_bipartitions.tre" > /dev/null 2>&1
+    $MCLI cp -r output_step2 "$S3_DATA/iqtree_step2_output" > /dev/null 2>&1
+
+    set_checkpoint "3"
+    PASO_ACTUAL="3"
+
+    send_telegram "✅ *Step 2 completado — bootstrap ${N_BOOTSTRAP} réplicas*
+Tiempo: ${TIEMPO_S2} min
+\`thelephoraceae_boottrees.tre\` → réplicas con BL (CIs treePL)
+\`thelephoraceae_bipartitions.tre\` → soporte para publicación"
+fi
+
+# =========================================================
+# SUBIR RESULTADOS FINALES A MinIO
+# =========================================================
+if [ "$PASO_ACTUAL" = "3" ]; then
+    send_telegram "📤 Subiendo resultados finales a MinIO..."
+    $MCLI cp -r output_step1 "$S3_DATA/iqtree_step1_output" > /dev/null 2>&1
+    $MCLI cp -r output_step2 "$S3_DATA/iqtree_step2_output" > /dev/null 2>&1
+    set_checkpoint "COMPLETADO"
+
+    send_telegram "🍄 *IQ-TREE — TODO COMPLETADO*
+Resultados en MinIO:
+\`${S3_DATA}/iqtree_step1_output/\`
+\`${S3_DATA}/iqtree_step2_output/\`
+
+*Archivos clave:*
+• \`thelephoraceae_bestML.tre\` → árbol ML enraizado (treePL)
+• \`thelephoraceae_bipartitions.tre\` → soporte bootstrap (publicación)
+• \`thelephoraceae_boottrees.tre\` → ${N_BOOTSTRAP} réplicas con BL (CIs treePL)"
+fi
+
+kill $CKPT_PID 2>/dev/null
+echo "--- Analisis finalizado (paso: $(get_checkpoint)) ---"
