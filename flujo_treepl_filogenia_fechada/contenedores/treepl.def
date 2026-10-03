@@ -1,0 +1,46 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+# Contenedor de treePL 1.0 compilado desde el código fuente
+# (https://github.com/blackrim/treePL), con ADOL-C y NLopt incluidos en deps/.
+# Construir:  apptainer build --fakeroot treepl.sif treepl.def
+# Probar:     apptainer exec treepl.sif treePL
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export LD_LIBRARY_PATH=/usr/lib64:/usr/local/lib:/usr/lib:$LD_LIBRARY_PATH
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    apt update
+    apt install -y build-essential git autoconf automake libtool wget ca-certificates
+
+    cd /opt
+    git clone https://github.com/blackrim/treePL.git
+    cd /opt/treePL/deps
+
+    # ADOL-C con OpenMP
+    tar -xzf ADOL-C-2.6.3.tgz
+    cd ADOL-C-2.6.3
+    ./configure --with-openmp-flag=-fopenmp --prefix=/usr
+    make -j4 && make install
+    cd ..
+
+    # NLopt
+    tar -xzf nlopt-2.4.2.tar.gz
+    cd nlopt-2.4.2
+    ./configure --prefix=/usr/local
+    make -j4 && make install
+
+    # treePL
+    cd /opt/treePL/src
+    ./configure
+    make -j4
+    cp treePL /usr/local/bin/treePL
+    chmod 755 /usr/local/bin/treePL
+
+    apt clean && rm -rf /var/lib/apt/lists/*
+
+%runscript
+    exec treePL "$@"

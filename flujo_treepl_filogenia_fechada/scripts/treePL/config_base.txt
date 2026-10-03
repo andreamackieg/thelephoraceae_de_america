@@ -1,0 +1,52 @@
+[Input files containing the ML trees]
+# El script reemplaza esta ruta por la de cada bloque
+treefile = REEMPLAZADO_POR_EL_SCRIPT
+
+[General commands]
+numsites = 603
+nthreads = 2
+thorough
+log_pen
+seed = 12345
+
+[Calibrations]
+# Secundaria: raiz (Hymenochaetales+Corticiales vs resto), 243.9 Ma (Sanchez-Garcia et al., 2020)
+mrca = RAIZ Hymenochaete_tropica Suillus_luteus
+min = RAIZ 243.9
+max = RAIZ 243.9
+
+# Quatsinoporites cranhamii 127-129 Ma (Hymenochaetaceae; Smith et al., 2004)
+mrca = HYMENOCHAETACEAE Hymenochaete_tropica Fuscoporia_ferrea
+min = HYMENOCHAETACEAE 127
+max = HYMENOCHAETACEAE 129
+
+# Edaphagaricites conicus 113-121 Ma (Russula/Lactarius; Gobo et al., 2025)
+mrca = RUSSULA_LACTARIUS Russula_nigricans Lactarius_deliciosus
+min = RUSSULA_LACTARIUS 113
+
+# Trametites eocenicus 35-38 Ma (corona de Trametes; Knobloch & Kotlaba, 1994)
+mrca = TRAMETES Trametes_pavonia Trametes_polyzona
+min = TRAMETES 35
+
+# Ganodermites lybicus 18-19 Ma (corona de Ganoderma; Fleischmann et al., 2007)
+mrca = GANODERMA Ganoderma_brownii Ganoderma_meredithae
+min = GANODERMA 18
+
+# Fosil ectomicorrizico Suillus/Rhizopogon ~50 Ma (Suillineae; Lepage et al., 1997)
+mrca = SUILLINEAE Suillus_luteus Rhizopogon_villosulus
+min = SUILLINEAE 50
+
+[Priming command]
+#prime
+
+[Best optimisation parameters]
+opt = 5
+optad = 5
+optcvad = 3
+
+[Best smoothing value]
+smooth = 0.000000001
+
+[Output file of dating step]
+# El script reemplaza esta ruta por la de cada bloque
+outfile = REEMPLAZADO_POR_EL_SCRIPT

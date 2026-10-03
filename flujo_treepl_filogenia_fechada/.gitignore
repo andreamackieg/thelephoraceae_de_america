@@ -1,0 +1,12 @@
+# Credenciales
+secrets.env
+
+# Contenedores compilados (se reconstruyen con los .def)
+*.sif
+
+# Datos y resultados pesados
+datos/
+resultados/
+logs/
+*.boottrees
+*.ckp.gz
