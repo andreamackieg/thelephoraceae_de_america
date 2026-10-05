@@ -28,7 +28,7 @@ Se usaron cinco calibraciones fósiles y una calibración secundaria en la raíz
 
 | Nodo (nombre en el config) | Orden | Calibración | Edad usada (Ma) | Terminales del mrca | Localidad | Referencia |
 | --- | --- | --- | --- | --- | --- | --- |
-| RAIZ | Hymenochaetales + Corticiales vs. resto | Secundaria | min = max = 243.9 | *Hymenochaete tropica*, *Suillus luteus* | — | Sánchez-García et al., 2020 |
+| RAIZ | Hymenochaetales + Corticiales vs. resto | Secundaria | min = max = 243.9 | *Hymenochaete tropica* | — | Sánchez-García et al., 2020 |
 | HYMENOCHAETACEAE | Hymenochaetales | *Quatsinoporites cranhamii* (127–129 Ma) | min 127, max 129 | *Hymenochaete tropica*, *Fuscoporia ferrea* | Columbia Británica, Canadá | Smith et al., 2004 |
 | RUSSULA\_LACTARIUS | Russulales | *Edaphagaricites conicus* (113–121 Ma) | min 113 | *Russula nigricans*, *Lactarius deliciosus* | Ceará, Brasil | Gobo et al., 2025 |
 | TRAMETES | Polyporales | *Trametites eocenicus* (35–38 Ma) | min 35 | *Trametes pavonia*, *Trametes polyzona* | Radvanov, República Checa | Knobloch & Kotlaba, 1994 |
